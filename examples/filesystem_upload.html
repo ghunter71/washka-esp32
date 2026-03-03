@@ -1,0 +1,328 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Filesystem Update - Washka</title>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            max-width: 800px;
+            margin: 50px auto;
+            padding: 20px;
+            background: #1a1a1a;
+            color: #fff;
+        }
+        .card {
+            background: #2a2a2a;
+            border-radius: 8px;
+            padding: 20px;
+            margin-bottom: 20px;
+            box-shadow: 0 2px 4px rgba(0,0,0,0.3);
+        }
+        h2 {
+            margin-top: 0;
+            color: #4CAF50;
+        }
+        input[type="file"] {
+            display: block;
+            margin: 10px 0;
+            padding: 10px;
+            background: #3a3a3a;
+            border: 1px solid #555;
+            border-radius: 4px;
+            color: #fff;
+            width: 100%;
+        }
+        button {
+            background: #4CAF50;
+            color: white;
+            border: none;
+            padding: 12px 24px;
+            border-radius: 4px;
+            cursor: pointer;
+            font-size: 16px;
+            margin-top: 10px;
+        }
+        button:hover {
+            background: #45a049;
+        }
+        button:disabled {
+            background: #666;
+            cursor: not-allowed;
+        }
+        .progress {
+            width: 100%;
+            height: 30px;
+            background: #3a3a3a;
+            border-radius: 4px;
+            margin: 10px 0;
+            overflow: hidden;
+            display: none;
+        }
+        .progress-bar {
+            height: 100%;
+            background: #4CAF50;
+            width: 0%;
+            transition: width 0.3s;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            color: white;
+            font-weight: bold;
+        }
+        .message {
+            padding: 10px;
+            margin: 10px 0;
+            border-radius: 4px;
+            display: none;
+        }
+        .message.success {
+            background: #4CAF50;
+            display: block;
+        }
+        .message.error {
+            background: #f44336;
+            display: block;
+        }
+        .file-list {
+            max-height: 300px;
+            overflow-y: auto;
+            background: #3a3a3a;
+            padding: 10px;
+            border-radius: 4px;
+        }
+        .file-item {
+            padding: 8px;
+            margin: 4px 0;
+            background: #2a2a2a;
+            border-radius: 4px;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+        .file-item button {
+            padding: 4px 12px;
+            font-size: 14px;
+            margin: 0;
+        }
+    </style>
+</head>
+<body>
+    <h1>🔄 Filesystem Update</h1>
+    
+    <!-- Обновление всей файловой системы -->
+    <div class="card">
+        <h2>📦 Обновить всю файловую систему (LittleFS.bin)</h2>
+        <p>Загрузите littlefs.bin для полного обновления файловой системы. Устройство перезагрузится после обновления.</p>
+        <input type="file" id="filesystemFile" accept=".bin">
+        <div class="progress" id="fsProgress">
+            <div class="progress-bar" id="fsProgressBar">0%</div>
+        </div>
+        <div class="message" id="fsMessage"></div>
+        <button onclick="uploadFilesystem()" id="fsUploadBtn">Обновить файловую систему</button>
+    </div>
+    
+    <!-- Загрузка отдельных файлов -->
+    <div class="card">
+        <h2>📄 Загрузить отдельные файлы</h2>
+        <p>Загрузите один или несколько файлов в файловую систему.</p>
+        <input type="file" id="individualFiles" multiple>
+        <div class="progress" id="fileProgress">
+            <div class="progress-bar" id="fileProgressBar">0%</div>
+        </div>
+        <div class="message" id="fileMessage"></div>
+        <button onclick="uploadFiles()" id="fileUploadBtn">Загрузить файлы</button>
+    </div>
+    
+    <!-- Список файлов -->
+    <div class="card">
+        <h2>📁 Файлы в системе</h2>
+        <button onclick="loadFileList()">Обновить список</button>
+        <div class="file-list" id="fileList">
+            <p>Нажмите "Обновить список" для загрузки файлов</p>
+        </div>
+    </div>
+    
+    <script>
+        // Обновление файловой системы
+        async function uploadFilesystem() {
+            const fileInput = document.getElementById('filesystemFile');
+            const file = fileInput.files[0];
+            
+            if (!file) {
+                alert('Выберите файл littlefs.bin');
+                return;
+            }
+            
+            const progressDiv = document.getElementById('fsProgress');
+            const progressBar = document.getElementById('fsProgressBar');
+            const messageDiv = document.getElementById('fsMessage');
+            const uploadBtn = document.getElementById('fsUploadBtn');
+            
+            progressDiv.style.display = 'block';
+            messageDiv.style.display = 'none';
+            uploadBtn.disabled = true;
+            
+            const formData = new FormData();
+            formData.append('filesystem', file);
+            
+            try {
+                const xhr = new XMLHttpRequest();
+                
+                xhr.upload.addEventListener('progress', (e) => {
+                    if (e.lengthComputable) {
+                        const percent = Math.round((e.loaded / e.total) * 100);
+                        progressBar.style.width = percent + '%';
+                        progressBar.textContent = percent + '%';
+                    }
+                });
+                
+                xhr.addEventListener('load', () => {
+                    if (xhr.status === 200) {
+                        messageDiv.className = 'message success';
+                        messageDiv.textContent = 'Файловая система обновлена! Устройство перезагружается...';
+                        messageDiv.style.display = 'block';
+                        
+                        setTimeout(() => {
+                            window.location.reload();
+                        }, 5000);
+                    } else {
+                        messageDiv.className = 'message error';
+                        messageDiv.textContent = 'Ошибка обновления: ' + xhr.statusText;
+                        messageDiv.style.display = 'block';
+                        uploadBtn.disabled = false;
+                    }
+                });
+                
+                xhr.addEventListener('error', () => {
+                    messageDiv.className = 'message error';
+                    messageDiv.textContent = 'Ошибка соединения';
+                    messageDiv.style.display = 'block';
+                    uploadBtn.disabled = false;
+                });
+                
+                xhr.open('POST', '/api/update/filesystem');
+                xhr.send(formData);
+                
+            } catch (error) {
+                messageDiv.className = 'message error';
+                messageDiv.textContent = 'Ошибка: ' + error.message;
+                messageDiv.style.display = 'block';
+                uploadBtn.disabled = false;
+            }
+        }
+        
+        // Загрузка отдельных файлов
+        async function uploadFiles() {
+            const fileInput = document.getElementById('individualFiles');
+            const files = fileInput.files;
+            
+            if (files.length === 0) {
+                alert('Выберите файлы для загрузки');
+                return;
+            }
+            
+            const progressDiv = document.getElementById('fileProgress');
+            const progressBar = document.getElementById('fileProgressBar');
+            const messageDiv = document.getElementById('fileMessage');
+            const uploadBtn = document.getElementById('fileUploadBtn');
+            
+            progressDiv.style.display = 'block';
+            messageDiv.style.display = 'none';
+            uploadBtn.disabled = true;
+            
+            let uploaded = 0;
+            
+            for (let i = 0; i < files.length; i++) {
+                const file = files[i];
+                const formData = new FormData();
+                formData.append('file', file);
+                
+                try {
+                    const response = await fetch('/api/upload/file', {
+                        method: 'POST',
+                        body: formData
+                    });
+                    
+                    if (response.ok) {
+                        uploaded++;
+                        const percent = Math.round((uploaded / files.length) * 100);
+                        progressBar.style.width = percent + '%';
+                        progressBar.textContent = `${uploaded}/${files.length} (${percent}%)`;
+                    }
+                } catch (error) {
+                    console.error('Error uploading file:', file.name, error);
+                }
+            }
+            
+            messageDiv.className = 'message success';
+            messageDiv.textContent = `Загружено ${uploaded} из ${files.length} файлов`;
+            messageDiv.style.display = 'block';
+            uploadBtn.disabled = false;
+            
+            // Обновить список файлов
+            setTimeout(loadFileList, 1000);
+        }
+        
+        // Загрузка списка файлов
+        async function loadFileList() {
+            const fileListDiv = document.getElementById('fileList');
+            fileListDiv.innerHTML = '<p>Загрузка...</p>';
+            
+            try {
+                const response = await fetch('/api/files/list');
+                const data = await response.json();
+                
+                if (data.files.length === 0) {
+                    fileListDiv.innerHTML = '<p>Файлов не найдено</p>';
+                    return;
+                }
+                
+                fileListDiv.innerHTML = '';
+                data.files.forEach(file => {
+                    const fileItem = document.createElement('div');
+                    fileItem.className = 'file-item';
+                    fileItem.innerHTML = `
+                        <span>${file.name} (${formatBytes(file.size)})</span>
+                        <button onclick="deleteFile('${file.name}')">Удалить</button>
+                    `;
+                    fileListDiv.appendChild(fileItem);
+                });
+            } catch (error) {
+                fileListDiv.innerHTML = '<p>Ошибка загрузки списка файлов</p>';
+            }
+        }
+        
+        // Удаление файла
+        async function deleteFile(filename) {
+            if (!confirm(`Удалить файл ${filename}?`)) {
+                return;
+            }
+            
+            try {
+                const response = await fetch(`/api/delete/file?path=${encodeURIComponent(filename)}`, {
+                    method: 'DELETE'
+                });
+                
+                if (response.ok) {
+                    loadFileList();
+                } else {
+                    alert('Ошибка удаления файла');
+                }
+            } catch (error) {
+                alert('Ошибка: ' + error.message);
+            }
+        }
+        
+        // Форматирование размера файла
+        function formatBytes(bytes) {
+            if (bytes === 0) return '0 Bytes';
+            const k = 1024;
+            const sizes = ['Bytes', 'KB', 'MB'];
+            const i = Math.floor(Math.log(bytes) / Math.log(k));
+            return Math.round(bytes / Math.pow(k, i) * 100) / 100 + ' ' + sizes[i];
+        }
+    </script>
+</body>
+</html>

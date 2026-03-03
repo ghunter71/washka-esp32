@@ -1,0 +1,207 @@
+<!DOCTYPE html>
+<html lang="en" data-bs-theme="dark">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>GPIO Configuration - Washka</title>
+    <link rel="stylesheet" href="/bootstrap.min.css">
+    <link rel="stylesheet" href="/style.css">
+</head>
+<body>
+    <nav class="navbar navbar-expand-lg navbar-dark bg-dark">
+        <div class="container-fluid">
+            <a class="navbar-brand" href="/">Washka System</a>
+            <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbarNav">
+                <span class="navbar-toggler-icon"></span>
+            </button>
+            <div class="collapse navbar-collapse" id="navbarNav">
+                <ul class="navbar-nav">
+                    <li class="nav-item">
+                        <a class="nav-link" href="/">Control</a>
+                    </li>
+                    <li class="nav-item">
+                        <a class="nav-link active" href="/config-gpio.html">GPIO Config</a>
+                    </li>
+                    <li class="nav-item">
+                        <a class="nav-link" href="/config-timing.html">Timing Config</a>
+                    </li>
+                    <li class="nav-item">
+                        <a class="nav-link" href="/config-system.html">System Config</a>
+                    </li>
+                </ul>
+            </div>
+        </div>
+    </nav>
+
+    <div class="container mt-4">
+        <div class="row">
+            <div class="col-md-8">
+                <div class="card">
+                    <div class="card-header">
+                        <h5>GPIO Pin Configuration</h5>
+                    </div>
+                    <div class="card-body">
+                        <form id="gpioForm">
+                            <div class="mb-3">
+                                <label for="pinWashEngine" class="form-label">Wash Engine Pin</label>
+                                <select class="form-select" id="pinWashEngine" name="washengine" required>
+                                    <option value="">Select Pin...</option>
+                                </select>
+                                <div class="form-text" id="helpWashEngine"></div>
+                            </div>
+
+                            <div class="mb-3">
+                                <label for="pinPump" class="form-label">Pump Pin</label>
+                                <select class="form-select" id="pinPump" name="pompa" required>
+                                    <option value="">Select Pin...</option>
+                                </select>
+                                <div class="form-text" id="helpPump"></div>
+                            </div>
+
+                            <div class="mb-3">
+                                <label for="pinGerkon" class="form-label">Water Gerkon Pin</label>
+                                <select class="form-select" id="pinGerkon" name="watergerkon" required>
+                                    <option value="">Select Pin...</option>
+                                </select>
+                                <div class="form-text" id="helpGerkon"></div>
+                            </div>
+
+                            <div class="mb-3">
+                                <label for="pinPowder" class="form-label">Powder Dispenser Pin</label>
+                                <select class="form-select" id="pinPowder" name="powder" required>
+                                    <option value="">Select Pin...</option>
+                                </select>
+                                <div class="form-text" id="helpPowder"></div>
+                            </div>
+
+                            <div class="mb-3">
+                                <label for="pinValve" class="form-label">Water Valve Pin</label>
+                                <select class="form-select" id="pinValve" name="water_valve" required>
+                                    <option value="">Select Pin...</option>
+                                </select>
+                                <div class="form-text" id="helpValve"></div>
+                            </div>
+
+                            <div class="mb-3">
+                                <label for="pinButton" class="form-label">Button Pin</label>
+                                <select class="form-select" id="pinButton" name="button" required>
+                                    <option value="">Select Pin...</option>
+                                </select>
+                                <div class="form-text" id="helpButton"></div>
+                            </div>
+
+                            <div class="mb-3">
+                                <label for="pinLED" class="form-label">LED Pin</label>
+                                <select class="form-select" id="pinLED" name="led" required>
+                                    <option value="">Select Pin...</option>
+                                </select>
+                                <div class="form-text" id="helpLED"></div>
+                            </div>
+
+                            <div class="alert alert-warning" id="pinWarning" style="display: none;">
+                                <strong>Warning:</strong> <span id="pinWarningText"></span>
+                            </div>
+
+                            <div class="d-grid gap-2 d-md-flex justify-content-md-end">
+                                <button type="button" class="btn btn-secondary" onclick="loadGPIOConfig()">Reset</button>
+                                <button type="submit" class="btn btn-primary">Save Configuration</button>
+                            </div>
+                        </form>
+                    </div>
+                </div>
+            </div>
+
+            <div class="col-md-4">
+                <div class="card mb-3">
+                    <div class="card-header">
+                        <h5>WROOM-32 Pin Legend</h5>
+                    </div>
+                    <div class="card-body">
+                        <div class="pin-legend small">
+                            <div class="mb-3">
+                                <strong class="text-success">✓ Recommended Pins:</strong>
+                                <div class="text-muted small">
+                                    GPIO 4, 5, 13, 14, 16-19, 21-23, 25-27, 32-33
+                                </div>
+                                <div class="text-muted small mt-1">
+                                    These pins are safe for general use
+                                </div>
+                            </div>
+                            
+                            <div class="mb-3">
+                                <strong class="text-warning">⚠️ Strapping Pins:</strong>
+                                <div class="text-muted small">
+                                    GPIO 0, 2, 5, 12, 15
+                                </div>
+                                <div class="text-muted small mt-1">
+                                    Affect boot behavior - use with caution
+                                </div>
+                            </div>
+                            
+                            <div class="mb-3">
+                                <strong class="text-danger">✗ Avoid:</strong>
+                                <div class="text-muted small">
+                                    GPIO 6-11 (Flash), GPIO 1, 3 (Serial)
+                                </div>
+                                <div class="text-muted small mt-1">
+                                    Connected to critical functions
+                                </div>
+                            </div>
+                            
+                            <div class="mb-3">
+                                <strong class="text-info">ℹ️ Input Only:</strong>
+                                <div class="text-muted small">
+                                    GPIO 34-39
+                                </div>
+                                <div class="text-muted small mt-1">
+                                    No pull-up/pull-down resistors
+                                </div>
+                            </div>
+                            
+                            <div class="mb-2">
+                                <strong class="text-secondary">ADC2 Note:</strong>
+                                <div class="text-muted small">
+                                    GPIO 13, 14, 25-27 (ADC2) cannot be used for analog input when WiFi is active
+                                </div>
+                            </div>
+                        </div>
+                        <hr>
+                        <div class="small">
+                            <strong>Pin Format:</strong>
+                            <div class="text-muted">GPIO## - Label (Capabilities)</div>
+                            <div class="text-muted mt-2">
+                                <strong>Example:</strong><br>
+                                GPIO32 - D32 (ADC1_4/GPIO32)
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="card">
+                    <div class="card-header">
+                        <h5>Selected Pin Details</h5>
+                    </div>
+                    <div class="card-body small" id="pinDetails">
+                        <p class="text-muted">Select a pin to see detailed information</p>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <div class="toast-container position-fixed bottom-0 end-0 p-3">
+        <div id="toast" class="toast" role="alert">
+            <div class="toast-header">
+                <strong class="me-auto">Notification</strong>
+                <button type="button" class="btn-close" data-bs-dismiss="toast"></button>
+            </div>
+            <div class="toast-body" id="toastBody">
+                Message
+            </div>
+        </div>
+    </div>
+
+    <script src="/bootstrap.bundle.min.js"></script>
+    <script src="/config-gpio.js"></script>
+</body>
+</html>

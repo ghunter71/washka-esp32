@@ -1,0 +1,185 @@
+/* Custom styles for Washka dark theme */
+
+:root {
+    --bs-body-bg: #1a1a1a;
+    --bs-body-color: #e0e0e0;
+}
+
+body {
+    min-height: 100vh;
+    background-color: var(--bs-body-bg);
+}
+
+.navbar {
+    box-shadow: 0 2px 4px rgba(0,0,0,0.3);
+}
+
+.card {
+    background-color: #2d2d2d;
+    border-color: #404040;
+    box-shadow: 0 2px 8px rgba(0,0,0,0.2);
+}
+
+.card-header {
+    background-color: #363636;
+    border-bottom-color: #404040;
+}
+
+.actuator-status {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    padding: 0.25rem 0;
+}
+
+.badge {
+    min-width: 60px;
+    text-align: center;
+}
+
+.form-control:focus,
+.form-select:focus {
+    border-color: #0d6efd;
+    box-shadow: 0 0 0 0.25rem rgba(13, 110, 253, 0.25);
+}
+
+.btn {
+    transition: all 0.2s ease;
+}
+
+.btn:hover {
+    transform: translateY(-1px);
+    box-shadow: 0 4px 8px rgba(0,0,0,0.3);
+}
+
+.progress {
+    background-color: #404040;
+}
+
+.toast {
+    background-color: #2d2d2d;
+    border: 1px solid #404040;
+}
+
+.toast-header {
+    background-color: #363636;
+    border-bottom-color: #404040;
+}
+
+.pin-legend {
+    line-height: 1.6;
+}
+
+.list-group-item {
+    background-color: #2d2d2d;
+    border-color: #404040;
+    color: var(--bs-body-color);
+}
+
+.modal-content {
+    background-color: #2d2d2d;
+    border-color: #404040;
+}
+
+.modal-header {
+    border-bottom-color: #404040;
+}
+
+.modal-footer {
+    border-top-color: #404040;
+}
+
+/* State-specific badge colors */
+.badge.state-idle {
+    background-color: #6c757d !important;
+}
+
+.badge.state-running {
+    background-color: #0d6efd !important;
+}
+
+.badge.state-complete {
+    background-color: #198754 !important;
+}
+
+.badge.state-error {
+    background-color: #dc3545 !important;
+}
+
+/* Actuator status colors */
+.badge.actuator-on {
+    background-color: #198754 !important;
+}
+
+.badge.actuator-off {
+    background-color: #6c757d !important;
+}
+
+/* Pin warning styles */
+.pin-warning {
+    font-size: 0.875rem;
+    color: #ffc107;
+}
+
+.pin-danger {
+    font-size: 0.875rem;
+    color: #dc3545;
+}
+
+/* Responsive adjustments */
+@media (max-width: 768px) {
+    .container {
+        padding-left: 10px;
+        padding-right: 10px;
+    }
+    
+    .card {
+        margin-bottom: 1rem;
+    }
+    
+    .btn-group {
+        flex-direction: column;
+    }
+    
+    .btn-group .btn {
+        border-radius: 0.375rem !important;
+        margin-bottom: 0.25rem;
+    }
+}
+
+/* Loading animation */
+@keyframes pulse {
+    0%, 100% {
+        opacity: 1;
+    }
+    50% {
+        opacity: 0.5;
+    }
+}
+
+.loading {
+    animation: pulse 1.5s ease-in-out infinite;
+}
+
+/* Connection status indicator */
+.connection-status {
+    position: fixed;
+    top: 60px;
+    right: 20px;
+    padding: 0.5rem 1rem;
+    border-radius: 0.375rem;
+    background-color: #198754;
+    color: white;
+    font-size: 0.875rem;
+    z-index: 1000;
+    box-shadow: 0 2px 8px rgba(0,0,0,0.3);
+}
+
+.connection-status.disconnected {
+    background-color: #dc3545;
+}
+
+.connection-status.connecting {
+    background-color: #ffc107;
+    color: #000;
+}

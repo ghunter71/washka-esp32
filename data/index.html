@@ -1,0 +1,231 @@
+<!DOCTYPE html>
+<html lang="en" data-bs-theme="dark">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Washka Control</title>
+    <link rel="stylesheet" href="/bootstrap.min.css">
+    <link rel="stylesheet" href="/style.css">
+</head>
+<body>
+    <nav class="navbar navbar-expand-lg navbar-dark bg-dark">
+        <div class="container-fluid">
+            <a class="navbar-brand" href="/">Washka System</a>
+            <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbarNav">
+                <span class="navbar-toggler-icon"></span>
+            </button>
+            <div class="collapse navbar-collapse" id="navbarNav">
+                <ul class="navbar-nav">
+                    <li class="nav-item">
+                        <a class="nav-link active" href="/">Control</a>
+                    </li>
+                    <li class="nav-item">
+                        <a class="nav-link" href="/config-gpio.html">GPIO Config</a>
+                    </li>
+                    <li class="nav-item">
+                        <a class="nav-link" href="/config-timing.html">Timing Config</a>
+                    </li>
+                    <li class="nav-item">
+                        <a class="nav-link" href="/config-telegram.html">Telegram Config</a>
+                    </li>
+                    <li class="nav-item">
+                        <a class="nav-link" href="/config-system.html">System Config</a>
+                    </li>
+                </ul>
+            </div>
+        </div>
+    </nav>
+
+    <div class="container mt-4">
+        <div class="row">
+            <div class="col-md-8">
+                <div class="card mb-4">
+                    <div class="card-header">
+                        <h5>System Status</h5>
+                    </div>
+                    <div class="card-body">
+                        <div class="row mb-3">
+                            <div class="col-6">
+                                <strong>State:</strong>
+                                <span id="state" class="badge bg-secondary">IDLE</span>
+                            </div>
+                            <div class="col-6">
+                                <strong>Progress:</strong>
+                                <span id="progress">0%</span>
+                            </div>
+                        </div>
+                        <div class="progress mb-3" style="height: 25px;">
+                            <div id="progressBar" class="progress-bar progress-bar-striped progress-bar-animated" 
+                                 role="progressbar" style="width: 0%">0%</div>
+                        </div>
+                        <div class="row">
+                            <div class="col-6">
+                                <strong>Elapsed:</strong>
+                                <span id="elapsed">00:00:00</span>
+                            </div>
+                            <div class="col-6">
+                                <strong>Remaining:</strong>
+                                <span id="remaining">00:00:00</span>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="card mb-4">
+                    <div class="card-header">
+                        <h5>Wash Cycle Control</h5>
+                    </div>
+                    <div class="card-body">
+                        <div class="d-grid gap-2 d-md-flex">
+                            <button id="btnStart" class="btn btn-success btn-lg" onclick="startCycle()">
+                                Start Wash
+                            </button>
+                            <button id="btnStop" class="btn btn-danger btn-lg" onclick="stopCycle()" disabled>
+                                Stop
+                            </button>
+                            <button id="btnPause" class="btn btn-warning btn-lg" onclick="pauseCycle()" disabled>
+                                Pause
+                            </button>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <div class="col-md-4">
+                <div class="card mb-4">
+                    <div class="card-header">
+                        <h5>Sensors</h5>
+                    </div>
+                    <div class="card-body">
+                        <div class="mb-2">
+                            <strong>Gerkon Count:</strong>
+                            <span id="gerkonCount" class="badge bg-info">0</span>
+                        </div>
+                        <div class="mb-2">
+                            <strong>Gerkon State:</strong>
+                            <span id="gerkonState" class="badge bg-secondary">LOW</span>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="card mb-4">
+                    <div class="card-header">
+                        <h5>Actuators</h5>
+                    </div>
+                    <div class="card-body">
+                        <div class="actuator-status mb-2">
+                            <span>Wash Engine:</span>
+                            <span id="actWashEngine" class="badge bg-secondary">OFF</span>
+                        </div>
+                        <div class="actuator-status mb-2">
+                            <span>Pump:</span>
+                            <span id="actPump" class="badge bg-secondary">OFF</span>
+                        </div>
+                        <div class="actuator-status mb-2">
+                            <span>Water Valve:</span>
+                            <span id="actValve" class="badge bg-secondary">OFF</span>
+                        </div>
+                        <div class="actuator-status mb-2">
+                            <span>Powder:</span>
+                            <span id="actPowder" class="badge bg-secondary">OFF</span>
+                        </div>
+                        <div class="actuator-status mb-2">
+                            <span>LED:</span>
+                            <span id="actLED" class="badge bg-secondary">OFF</span>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="card">
+                    <div class="card-header">
+                        <h5>System Info</h5>
+                    </div>
+                    <div class="card-body small">
+                        <div class="mb-1">
+                            <strong>Uptime:</strong>
+                            <span id="uptime">00:00:00</span>
+                        </div>
+                        <div class="mb-1">
+                            <strong>Free Heap:</strong>
+                            <span id="freeHeap">0</span> KB
+                        </div>
+                        <div class="mb-1">
+                            <strong>WiFi RSSI:</strong>
+                            <span id="wifiRSSI">0</span> dBm
+                        </div>
+                        <div class="mb-1">
+                            <strong>IP Address:</strong>
+                            <span id="ipAddress">-</span>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <div class="row mt-4">
+            <div class="col-12">
+                <div class="card">
+                    <div class="card-header">
+                        <h5>Manual Actuator Control</h5>
+                        <small class="text-muted">For testing purposes only. Use with caution!</small>
+                    </div>
+                    <div class="card-body">
+                        <div class="row">
+                            <div class="col-md-4 mb-3">
+                                <label class="form-label">Wash Engine</label>
+                                <div class="btn-group w-100" role="group">
+                                    <button class="btn btn-outline-success" onclick="manualControl('washengine', true)">ON</button>
+                                    <button class="btn btn-outline-danger" onclick="manualControl('washengine', false)">OFF</button>
+                                </div>
+                            </div>
+                            <div class="col-md-4 mb-3">
+                                <label class="form-label">Pump</label>
+                                <div class="btn-group w-100" role="group">
+                                    <button class="btn btn-outline-success" onclick="manualControl('pump', true)">ON</button>
+                                    <button class="btn btn-outline-danger" onclick="manualControl('pump', false)">OFF</button>
+                                </div>
+                            </div>
+                            <div class="col-md-4 mb-3">
+                                <label class="form-label">Water Valve</label>
+                                <div class="btn-group w-100" role="group">
+                                    <button class="btn btn-outline-success" onclick="manualControl('valve', true)">ON</button>
+                                    <button class="btn btn-outline-danger" onclick="manualControl('valve', false)">OFF</button>
+                                </div>
+                            </div>
+                            <div class="col-md-4 mb-3">
+                                <label class="form-label">Powder Dispenser</label>
+                                <div class="btn-group w-100" role="group">
+                                    <button class="btn btn-outline-success" onclick="manualControl('powder', true)">ON</button>
+                                    <button class="btn btn-outline-danger" onclick="manualControl('powder', false)">OFF</button>
+                                </div>
+                            </div>
+                            <div class="col-md-4 mb-3">
+                                <label class="form-label">LED</label>
+                                <div class="btn-group w-100" role="group">
+                                    <button class="btn btn-outline-success" onclick="manualControl('led', true)">ON</button>
+                                    <button class="btn btn-outline-danger" onclick="manualControl('led', false)">OFF</button>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <div class="toast-container position-fixed bottom-0 end-0 p-3">
+        <div id="toast" class="toast" role="alert">
+            <div class="toast-header">
+                <strong class="me-auto">Notification</strong>
+                <button type="button" class="btn-close" data-bs-dismiss="toast"></button>
+            </div>
+            <div class="toast-body" id="toastBody">
+                Message
+            </div>
+        </div>
+    </div>
+
+    <script src="/bootstrap.bundle.min.js"></script>
+    <script src="/app.js"></script>
+</body>
+</html>

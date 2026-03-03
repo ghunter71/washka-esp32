@@ -1,0 +1,237 @@
+<!DOCTYPE html>
+<html lang="en" data-bs-theme="dark">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>System Configuration - Washka</title>
+    <link rel="stylesheet" href="/bootstrap.min.css">
+    <link rel="stylesheet" href="/style.css">
+</head>
+<body>
+    <nav class="navbar navbar-expand-lg navbar-dark bg-dark">
+        <div class="container-fluid">
+            <a class="navbar-brand" href="/">Washka System</a>
+            <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbarNav">
+                <span class="navbar-toggler-icon"></span>
+            </button>
+            <div class="collapse navbar-collapse" id="navbarNav">
+                <ul class="navbar-nav">
+                    <li class="nav-item">
+                        <a class="nav-link" href="/">Control</a>
+                    </li>
+                    <li class="nav-item">
+                        <a class="nav-link" href="/config-gpio.html">GPIO Config</a>
+                    </li>
+                    <li class="nav-item">
+                        <a class="nav-link" href="/config-timing.html">Timing Config</a>
+                    </li>
+                    <li class="nav-item">
+                        <a class="nav-link active" href="/config-system.html">System Config</a>
+                    </li>
+                </ul>
+            </div>
+        </div>
+    </nav>
+
+    <div class="container mt-4">
+        <div class="row">
+            <div class="col-md-6">
+                <div class="card mb-4">
+                    <div class="card-header">
+                        <h5>WiFi Configuration</h5>
+                    </div>
+                    <div class="card-body">
+                        <form id="wifiForm">
+                            <div class="mb-3">
+                                <label for="wifiSSID" class="form-label">WiFi SSID</label>
+                                <input type="text" class="form-control" id="wifiSSID" name="ssid" 
+                                       maxlength="32" required>
+                                <div class="form-text">Network name (max 32 characters)</div>
+                            </div>
+
+                            <div class="mb-3">
+                                <label for="wifiPassword" class="form-label">WiFi Password</label>
+                                <input type="password" class="form-control" id="wifiPassword" name="password" 
+                                       minlength="8" maxlength="64">
+                                <div class="form-text">Leave empty for open network (min 8 characters for WPA)</div>
+                            </div>
+
+                            <div class="alert alert-warning">
+                                <strong>Note:</strong> Changing WiFi settings will restart the device and may cause temporary disconnection.
+                            </div>
+
+                            <div class="d-grid gap-2 d-md-flex justify-content-md-end">
+                                <button type="button" class="btn btn-secondary" onclick="loadWiFiConfig()">Reset</button>
+                                <button type="submit" class="btn btn-primary">Save WiFi Settings</button>
+                            </div>
+                        </form>
+                    </div>
+                </div>
+
+                <div class="card">
+                    <div class="card-header">
+                        <h5>Configuration Management</h5>
+                    </div>
+                    <div class="card-body">
+                        <div class="mb-3">
+                            <label class="form-label">Export Configuration</label>
+                            <button class="btn btn-info w-100" onclick="exportConfig()">
+                                Download Configuration JSON
+                            </button>
+                            <div class="form-text">Save current configuration to file</div>
+                        </div>
+
+                        <div class="mb-3">
+                            <label for="importFile" class="form-label">Import Configuration</label>
+                            <input type="file" class="form-control" id="importFile" accept=".json">
+                            <button class="btn btn-success w-100 mt-2" onclick="importConfig()">
+                                Upload Configuration
+                            </button>
+                            <div class="form-text">Restore configuration from JSON file</div>
+                        </div>
+
+                        <hr>
+
+                        <div class="mb-3">
+                            <label class="form-label">Factory Reset</label>
+                            <button class="btn btn-danger w-100" onclick="confirmFactoryReset()">
+                                Reset to Factory Defaults
+                            </button>
+                            <div class="form-text text-danger">This will erase all settings!</div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <div class="col-md-6">
+                <div class="card mb-4">
+                    <div class="card-header">
+                        <h5>Telegram Bot Configuration</h5>
+                    </div>
+                    <div class="card-body">
+                        <form id="telegramForm">
+                            <div class="mb-3">
+                                <label for="telegramToken" class="form-label">Bot Token</label>
+                                <input type="text" class="form-control" id="telegramToken" name="token" 
+                                       placeholder="1234567890:ABCdefGHIjklMNOpqrsTUVwxyz">
+                                <div class="form-text">Get token from @BotFather on Telegram</div>
+                            </div>
+
+                            <div class="mb-3">
+                                <label for="telegramChatId" class="form-label">Allowed Chat ID</label>
+                                <div class="input-group">
+                                    <input type="text" class="form-control" id="telegramChatId" 
+                                           placeholder="123456789">
+                                    <button class="btn btn-outline-secondary" type="button" onclick="addChatId()">
+                                        Add
+                                    </button>
+                                </div>
+                                <div class="form-text">Add authorized user chat IDs</div>
+                            </div>
+
+                            <div class="mb-3">
+                                <label class="form-label">Authorized Chat IDs</label>
+                                <ul class="list-group" id="chatIdList">
+                                    <li class="list-group-item text-muted">No chat IDs configured</li>
+                                </ul>
+                            </div>
+
+                            <div class="d-grid gap-2 d-md-flex justify-content-md-end">
+                                <button type="button" class="btn btn-secondary" onclick="loadTelegramConfig()">Reset</button>
+                                <button type="submit" class="btn btn-primary">Save Telegram Settings</button>
+                            </div>
+                        </form>
+                    </div>
+                </div>
+
+                <div class="card">
+                    <div class="card-header">
+                        <h5>System Actions</h5>
+                    </div>
+                    <div class="card-body">
+                        <div class="mb-3">
+                            <label class="form-label">Firmware Update</label>
+                            <a href="/update" class="btn btn-warning w-100" target="_blank">
+                                Open OTA Update Page
+                            </a>
+                            <div class="form-text">Update firmware over-the-air</div>
+                        </div>
+
+                        <div class="mb-3">
+                            <label class="form-label">Debug Console</label>
+                            <a href="/webserial" class="btn btn-info w-100" target="_blank">
+                                Open WebSerial Console
+                            </a>
+                            <div class="form-text">View system logs and debug information</div>
+                        </div>
+
+                        <div class="mb-3">
+                            <label class="form-label">System Restart</label>
+                            <button class="btn btn-warning w-100" onclick="confirmRestart()">
+                                Restart Device
+                            </button>
+                            <div class="form-text">Reboot the ESP32</div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Factory Reset Confirmation Modal -->
+    <div class="modal fade" id="factoryResetModal" tabindex="-1">
+        <div class="modal-dialog">
+            <div class="modal-content">
+                <div class="modal-header bg-danger text-white">
+                    <h5 class="modal-title">Confirm Factory Reset</h5>
+                    <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal"></button>
+                </div>
+                <div class="modal-body">
+                    <p>Are you sure you want to reset all settings to factory defaults?</p>
+                    <p class="text-danger"><strong>This action cannot be undone!</strong></p>
+                    <p>All configuration including WiFi, GPIO pins, timing, and Telegram settings will be erased.</p>
+                </div>
+                <div class="modal-footer">
+                    <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancel</button>
+                    <button type="button" class="btn btn-danger" onclick="factoryReset()">Reset Everything</button>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Restart Confirmation Modal -->
+    <div class="modal fade" id="restartModal" tabindex="-1">
+        <div class="modal-dialog">
+            <div class="modal-content">
+                <div class="modal-header bg-warning">
+                    <h5 class="modal-title">Confirm Restart</h5>
+                    <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+                </div>
+                <div class="modal-body">
+                    <p>Are you sure you want to restart the device?</p>
+                    <p>The system will be unavailable for a few seconds.</p>
+                </div>
+                <div class="modal-footer">
+                    <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancel</button>
+                    <button type="button" class="btn btn-warning" onclick="restartDevice()">Restart Now</button>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <div class="toast-container position-fixed bottom-0 end-0 p-3">
+        <div id="toast" class="toast" role="alert">
+            <div class="toast-header">
+                <strong class="me-auto">Notification</strong>
+                <button type="button" class="btn-close" data-bs-dismiss="toast"></button>
+            </div>
+            <div class="toast-body" id="toastBody">
+                Message
+            </div>
+        </div>
+    </div>
+
+    <script src="/bootstrap.bundle.min.js"></script>
+    <script src="/config-system.js"></script>
+</body>
+</html>

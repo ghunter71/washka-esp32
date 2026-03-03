@@ -1,0 +1,143 @@
+<!DOCTYPE html>
+<html lang="en" data-bs-theme="dark">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Telegram Configuration - Washka</title>
+    <link rel="stylesheet" href="/bootstrap.min.css">
+    <link rel="stylesheet" href="/style.css">
+</head>
+<body>
+    <nav class="navbar navbar-expand-lg navbar-dark bg-dark">
+        <div class="container-fluid">
+            <a class="navbar-brand" href="/">Washka System</a>
+            <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbarNav">
+                <span class="navbar-toggler-icon"></span>
+            </button>
+            <div class="collapse navbar-collapse" id="navbarNav">
+                <ul class="navbar-nav">
+                    <li class="nav-item">
+                        <a class="nav-link" href="/">Control</a>
+                    </li>
+                    <li class="nav-item">
+                        <a class="nav-link" href="/config-gpio.html">GPIO Config</a>
+                    </li>
+                    <li class="nav-item">
+                        <a class="nav-link" href="/config-timing.html">Timing Config</a>
+                    </li>
+                    <li class="nav-item">
+                        <a class="nav-link active" href="/config-telegram.html">Telegram Config</a>
+                    </li>
+                    <li class="nav-item">
+                        <a class="nav-link" href="/config-system.html">System Config</a>
+                    </li>
+                </ul>
+            </div>
+        </div>
+    </nav>
+
+    <div class="container mt-4">
+        <div class="row">
+            <div class="col-md-8">
+                <div class="card mb-4">
+                    <div class="card-header">
+                        <h5>Telegram Bot Configuration</h5>
+                    </div>
+                    <div class="card-body">
+                        <form id="telegramForm">
+                            <div class="mb-3 form-check form-switch">
+                                <input class="form-check-input" type="checkbox" id="telegramEnabled" name="enabled">
+                                <label class="form-check-label" for="telegramEnabled">
+                                    Enable Telegram Bot
+                                </label>
+                                <div class="form-text">Turn on/off Telegram bot functionality</div>
+                            </div>
+
+                            <div class="mb-3">
+                                <label for="botToken" class="form-label">Bot Token</label>
+                                <input type="text" class="form-control" id="botToken" name="token" 
+                                       placeholder="1234567890:ABCdefGHIjklMNOpqrsTUVwxyz">
+                                <div class="form-text">Get token from @BotFather on Telegram</div>
+                            </div>
+
+                            <div class="mb-3">
+                                <label for="chatIds" class="form-label">Allowed Chat IDs</label>
+                                <textarea class="form-control" id="chatIds" name="chatIds" rows="3" 
+                                          placeholder="123456789&#10;987654321"></textarea>
+                                <div class="form-text">One chat ID per line. Get your chat ID from @userinfobot</div>
+                            </div>
+
+                            <div class="alert alert-info">
+                                <strong>How to setup:</strong>
+                                <ol class="mb-0">
+                                    <li>Create bot with @BotFather and get token</li>
+                                    <li>Get your chat ID from @userinfobot</li>
+                                    <li>Enable bot and save settings</li>
+                                    <li>Send /start to your bot</li>
+                                </ol>
+                            </div>
+
+                            <div class="d-grid gap-2 d-md-flex justify-content-md-end">
+                                <button type="button" class="btn btn-secondary" onclick="loadTelegramConfig()">Reset</button>
+                                <button type="submit" class="btn btn-primary">Save Settings</button>
+                            </div>
+                        </form>
+                    </div>
+                </div>
+
+                <div class="card">
+                    <div class="card-header">
+                        <h5>Bot Commands</h5>
+                    </div>
+                    <div class="card-body">
+                        <table class="table table-sm">
+                            <thead>
+                                <tr>
+                                    <th>Command</th>
+                                    <th>Description</th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                <tr>
+                                    <td><code>/start</code></td>
+                                    <td>Show available commands</td>
+                                </tr>
+                                <tr>
+                                    <td><code>/status</code></td>
+                                    <td>Get current system status</td>
+                                </tr>
+                                <tr>
+                                    <td><code>/startwash</code></td>
+                                    <td>Start wash cycle</td>
+                                </tr>
+                                <tr>
+                                    <td><code>/stop</code></td>
+                                    <td>Stop wash cycle</td>
+                                </tr>
+                                <tr>
+                                    <td><code>/config</code></td>
+                                    <td>Show current configuration</td>
+                                </tr>
+                            </tbody>
+                        </table>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Toast notification -->
+    <div class="toast-container position-fixed bottom-0 end-0 p-3">
+        <div id="toast" class="toast" role="alert">
+            <div class="toast-header">
+                <strong class="me-auto">Notification</strong>
+                <button type="button" class="btn-close" data-bs-dismiss="toast"></button>
+            </div>
+            <div class="toast-body" id="toastBody"></div>
+        </div>
+    </div>
+
+    <script src="/bootstrap.bundle.min.js"></script>
+    <script src="/config-telegram.js"></script>
+</body>
+</html>

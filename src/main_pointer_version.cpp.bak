@@ -1,0 +1,179 @@
+/**
+ * Washka ESP32 - Dishwasher Control System
+ * FIXED VERSION - Using pointers to avoid global constructor issues
+ */
+
+#include <Arduino.h>
+#include <WiFi.h>
+#include <ESPAsyncWebServer.h>
+#include <WebSerial.h>
+
+// Component includes
+#include "ConfigManager.h"
+#include "StateManager.h"
+#include "ActuatorManager.h"
+#include "WaterControl.h"
+#include "WiFiManager.h"
+#include "WebInterface.h"
+#include "RestAPI.h"
+#include "TelegramInterface.h"
+#include "DebugLogger.h"
+#include "OTAUpdater.h"
+
+// Version information
+const char* FIRMWARE_VERSION = "1.0.0";
+const char* BUILD_DATE = __DATE__;
+const char* BUILD_TIME = __TIME__;
+
+// Global objects
+AsyncWebServer server(80);
+
+// Component instances - USING POINTERS to avoid constructor issues!
+ConfigManager* configManager = nullptr;
+StateManager* stateManager = nullptr;
+ActuatorManager* actuatorManager = nullptr;
+WaterControl* waterControl = nullptr;
+WiFiManager* wifiManager = nullptr;
+WebInterface* webInterface = nullptr;
+RestAPI* restAPI = nullptr;
+TelegramInterface* telegramInterface = nullptr;
+OTAUpdater* otaUpdater = nullptr;
+
+void setup() {
+    // Initialize serial communication
+    Serial.begin(115200);
+    delay(3000);  // Increased delay for stability
+    
+    Serial.println("\n\n\n");
+    Serial.println("========================================");
+    Serial.println("  Washka ESP32 - Dishwasher Control");
+    Serial.println("========================================");
+    Serial.printf("  Version: %s\n", FIRMWARE_VERSION);
+    Serial.printf("  Build: %s %s\n", BUILD_DATE, BUILD_TIME);
+    Serial.println("========================================\n");
+    
+    // Create objects AFTER Serial initialization
+    Serial.println("Creating objects...");
+    
+    configManager = new ConfigManager();
+    stateManager = new StateManager();
+    actuatorManager = new ActuatorManager();
+    waterControl = new WaterControl();
+    wifiManager = new WiFiManager();
+    webInterface = new WebInterface();
+    restAPI = new RestAPI();
+    otaUpdater = new OTAUpdater();
+    
+    Serial.println("✓ Objects created");
+    
+    // Initialize DebugLogger first
+    Serial.println("\nInitializing DebugLogger...");
+    DebugLogger& logger = DebugLogger::getInstance();
+    if (!logger.begin(&server)) {
+        Serial.println("ERROR: Failed to initialize DebugLogger");
+    } else {
+        Serial.println("✓ DebugLogger initialized");
+    }
+    
+    // Initialize ConfigManager
+    Serial.println("Initializing ConfigManager...");
+    if (!configManager->begin()) {
+        Serial.println("ERROR: Failed to initialize ConfigManager");
+    } else {
+        Serial.println("✓ ConfigManager initialized");
+    }
+    
+    // Initialize StateManager
+    Serial.println("Initializing StateManager...");
+    if (!stateManager->begin()) {
+        Serial.println("ERROR: Failed to initialize StateManager");
+    } else {
+        Serial.println("✓ StateManager initialized");
+    }
+    
+    // Initialize ActuatorManager
+    Serial.println("Initializing ActuatorManager...");
+    ConfigManager::PinConfig pins = configManager->getPinConfig();
+    if (!actuatorManager->begin(pins)) {
+        Serial.println("ERROR: Failed to initialize ActuatorManager");
+    } else {
+        Serial.println("✓ ActuatorManager initialized");
+    }
+    
+    // Initialize WaterControl
+    Serial.println("Initializing WaterControl...");
+    if (!waterControl->begin(pins.watergerkon)) {
+        Serial.println("ERROR: Failed to initialize WaterControl");
+    } else {
+        Serial.println("✓ WaterControl initialized");
+    }
+    waterControl->setDebounceMs(configManager->getGerkonDebounceMs());
+    
+    // Initialize WiFiManager
+    Serial.println("Initializing WiFiManager...");
+    if (!wifiManager->begin(configManager, &server)) {
+        Serial.println("WARNING: WiFi connection failed, running in AP mode");
+    } else {
+        Serial.println("✓ WiFiManager initialized");
+    }
+    
+    // Initialize WebInterface
+    Serial.println("Initializing WebInterface...");
+    if (!webInterface->begin(&server, configManager, stateManager, actuatorManager, waterControl)) {
+        Serial.println("ERROR: Failed to initialize WebInterface");
+    } else {
+        Serial.println("✓ WebInterface initialized");
+    }
+    
+    // Initialize RestAPI
+    Serial.println("Initializing RestAPI...");
+    if (!restAPI->begin(&server, configManager, stateManager, actuatorManager, waterControl)) {
+        Serial.println("ERROR: Failed to initialize RestAPI");
+    } else {
+        Serial.println("✓ RestAPI initialized");
+    }
+    
+    // Initialize TelegramInterface - CREATE HERE, not globally!
+    Serial.println("Initializing TelegramInterface...");
+    telegramInterface = new TelegramInterface(configManager, stateManager);
+    if (!telegramInterface->begin()) {
+        Serial.println("WARNING: Telegram bot not configured");
+    } else {
+        Serial.println("✓ Telegram bot initialized");
+    }
+    
+    // Initialize OTAUpdater
+    Serial.println("Initializing OTAUpdater...");
+    if (!otaUpdater->begin(&server, stateManager)) {
+        Serial.println("ERROR: Failed to initialize OTAUpdater");
+    } else {
+        Serial.println("✓ OTA updates available at /update");
+    }
+    
+    // Start web server
+    server.begin();
+    Serial.println("✓ Web server started");
+    
+    Serial.println("\n✓ System initialization complete");
+    Serial.println("System ready!\n");
+    
+    // Print system status
+    Serial.println("System Status:");
+    Serial.printf("  WiFi: %s\n", wifiManager->getStatus() == WiFiManager::ConnectionStatus::CONNECTED ? "Connected" : "AP Mode");
+    Serial.printf("  IP: %s\n", wifiManager->getIPAddress().c_str());
+    Serial.printf("  State: %s\n", stateManager->getStateDescription().c_str());
+    Serial.println();
+}
+
+void loop() {
+    // Update WiFiManager
+    if (wifiManager) wifiManager->loop();
+    
+    // Update WebInterface
+    if (webInterface) webInterface->loop();
+    
+    // Update TelegramInterface
+    if (telegramInterface) telegramInterface->loop();
+    
+    delay(100);
+}

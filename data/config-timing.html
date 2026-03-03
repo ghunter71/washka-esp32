@@ -1,0 +1,191 @@
+<!DOCTYPE html>
+<html lang="en" data-bs-theme="dark">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Timing Configuration - Washka</title>
+    <link rel="stylesheet" href="/bootstrap.min.css">
+    <link rel="stylesheet" href="/style.css">
+</head>
+<body>
+    <nav class="navbar navbar-expand-lg navbar-dark bg-dark">
+        <div class="container-fluid">
+            <a class="navbar-brand" href="/">Washka System</a>
+            <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbarNav">
+                <span class="navbar-toggler-icon"></span>
+            </button>
+            <div class="collapse navbar-collapse" id="navbarNav">
+                <ul class="navbar-nav">
+                    <li class="nav-item">
+                        <a class="nav-link" href="/">Control</a>
+                    </li>
+                    <li class="nav-item">
+                        <a class="nav-link" href="/config-gpio.html">GPIO Config</a>
+                    </li>
+                    <li class="nav-item">
+                        <a class="nav-link active" href="/config-timing.html">Timing Config</a>
+                    </li>
+                    <li class="nav-item">
+                        <a class="nav-link" href="/config-system.html">System Config</a>
+                    </li>
+                </ul>
+            </div>
+        </div>
+    </nav>
+
+    <div class="container mt-4">
+        <div class="row">
+            <div class="col-md-8">
+                <div class="card">
+                    <div class="card-header">
+                        <h5>Timing Configuration</h5>
+                    </div>
+                    <div class="card-body">
+                        <form id="timingForm">
+                            <div class="mb-3">
+                                <label for="tpomp" class="form-label">Pump Duration (seconds)</label>
+                                <input type="number" class="form-control" id="tpomp" name="tpomp" 
+                                       min="1" max="600" required>
+                                <div class="form-text">Duration for draining water (1-600 seconds)</div>
+                            </div>
+
+                            <div class="mb-3">
+                                <label for="washtime0" class="form-label">Pre-wash Duration (seconds)</label>
+                                <input type="number" class="form-control" id="washtime0" name="washtime0" 
+                                       min="1" max="3600" required>
+                                <div class="form-text">Duration for pre-wash cycle (1-3600 seconds)</div>
+                            </div>
+
+                            <div class="mb-3">
+                                <label for="washtime1" class="form-label">Main Wash Duration (seconds)</label>
+                                <input type="number" class="form-control" id="washtime1" name="washtime1" 
+                                       min="1" max="3600" required>
+                                <div class="form-text">Duration for main wash cycle (1-3600 seconds)</div>
+                            </div>
+
+                            <div class="mb-3">
+                                <label for="washtime2" class="form-label">First Rinse Duration (seconds)</label>
+                                <input type="number" class="form-control" id="washtime2" name="washtime2" 
+                                       min="1" max="3600" required>
+                                <div class="form-text">Duration for first rinse cycle (1-3600 seconds)</div>
+                            </div>
+
+                            <div class="mb-3">
+                                <label for="washtime3" class="form-label">Second Rinse Duration (seconds)</label>
+                                <input type="number" class="form-control" id="washtime3" name="washtime3" 
+                                       min="1" max="3600" required>
+                                <div class="form-text">Duration for second rinse cycle (1-3600 seconds)</div>
+                            </div>
+
+                            <div class="mb-3">
+                                <label for="pausa" class="form-label">Pause Between Cycles (seconds)</label>
+                                <input type="number" class="form-control" id="pausa" name="pausa" 
+                                       min="0" max="600" required>
+                                <div class="form-text">Pause duration between wash cycles (0-600 seconds)</div>
+                            </div>
+
+                            <div class="mb-3">
+                                <label for="water_in_timer" class="form-label">Water Fill Timeout (seconds)</label>
+                                <input type="number" class="form-control" id="water_in_timer" name="water_in_timer" 
+                                       min="10" max="600" required>
+                                <div class="form-text">Maximum time to wait for water fill (10-600 seconds)</div>
+                            </div>
+
+                            <div class="mb-3">
+                                <label for="gerkon_threshold" class="form-label">Gerkon Threshold (counts)</label>
+                                <input type="number" class="form-control" id="gerkon_threshold" name="gerkon_threshold" 
+                                       min="1" max="1000" required>
+                                <div class="form-text">Number of gerkon triggers to reach desired water level (1-1000)</div>
+                            </div>
+
+                            <div class="mb-3">
+                                <label for="gerkon_debounce" class="form-label">Gerkon Debounce (milliseconds)</label>
+                                <input type="number" class="form-control" id="gerkon_debounce" name="gerkon_debounce" 
+                                       min="10" max="1000" required>
+                                <div class="form-text">Debounce time for gerkon sensor (10-1000 ms)</div>
+                            </div>
+
+                            <div class="alert alert-info">
+                                <strong>Total Estimated Cycle Time:</strong>
+                                <span id="totalTime">0:00:00</span>
+                            </div>
+
+                            <div class="d-grid gap-2 d-md-flex justify-content-md-end">
+                                <button type="button" class="btn btn-secondary" onclick="loadTimingConfig()">Reset</button>
+                                <button type="submit" class="btn btn-primary">Save Configuration</button>
+                            </div>
+                        </form>
+                    </div>
+                </div>
+            </div>
+
+            <div class="col-md-4">
+                <div class="card mb-3">
+                    <div class="card-header">
+                        <h5>Timing Guidelines</h5>
+                    </div>
+                    <div class="card-body small">
+                        <div class="mb-3">
+                            <strong>Recommended Values:</strong>
+                            <ul class="mt-2">
+                                <li>Pump: 60-120 seconds</li>
+                                <li>Pre-wash: 300-600 seconds</li>
+                                <li>Main Wash: 600-1200 seconds</li>
+                                <li>Rinse: 300-600 seconds each</li>
+                                <li>Pause: 5-30 seconds</li>
+                                <li>Water Timeout: 60-180 seconds</li>
+                            </ul>
+                        </div>
+                        <div class="mb-3">
+                            <strong>Gerkon Settings:</strong>
+                            <ul class="mt-2">
+                                <li>Threshold: Depends on water level sensor placement</li>
+                                <li>Debounce: 50-200 ms typical</li>
+                            </ul>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="card">
+                    <div class="card-header">
+                        <h5>Cycle Breakdown</h5>
+                    </div>
+                    <div class="card-body small">
+                        <div class="mb-2">
+                            <strong>Pre-wash Phase:</strong>
+                            <div class="text-muted">Drain + Fill + Wash + Drain</div>
+                        </div>
+                        <div class="mb-2">
+                            <strong>Main Wash Phase:</strong>
+                            <div class="text-muted">Fill + Wash + Drain</div>
+                        </div>
+                        <div class="mb-2">
+                            <strong>Rinse Phases (x2):</strong>
+                            <div class="text-muted">Fill + Rinse + Drain</div>
+                        </div>
+                        <div class="mb-2">
+                            <strong>Final:</strong>
+                            <div class="text-muted">Final Drain</div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <div class="toast-container position-fixed bottom-0 end-0 p-3">
+        <div id="toast" class="toast" role="alert">
+            <div class="toast-header">
+                <strong class="me-auto">Notification</strong>
+                <button type="button" class="btn-close" data-bs-dismiss="toast"></button>
+            </div>
+            <div class="toast-body" id="toastBody">
+                Message
+            </div>
+        </div>
+    </div>
+
+    <script src="/bootstrap.bundle.min.js"></script>
+    <script src="/config-timing.js"></script>
+</body>
+</html>
