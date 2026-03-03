@@ -1,0 +1,385 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Washka - Schedule</title>
+    <link href="bootstrap.min.css" rel="stylesheet">
+    <link href="style.css" rel="stylesheet">
+</head>
+<body class="dark-theme">
+    <nav class="navbar navbar-expand-lg navbar-dark bg-dark">
+        <div class="container">
+            <a class="navbar-brand" href="/">🏠 Washka</a>
+            <div class="navbar-nav ms-auto">
+                <a class="nav-link" href="/">Dashboard</a>
+                <a class="nav-link" href="config-gpio.html">GPIO</a>
+                <a class="nav-link" href="config-timing.html">Timing</a>
+                <a class="nav-link" href="config-system.html">System</a>
+                <a class="nav-link" href="config-mqtt.html">MQTT</a>
+                <a class="nav-link active" href="schedule.html">Schedule</a>
+                <a class="nav-link" href="statistics.html">Statistics</a>
+            </div>
+        </div>
+    </nav>
+
+    <div class="container mt-4">
+        <h2>⏰ Schedule Management</h2>
+        <p class="text-muted">Set up delayed starts and recurring wash cycles</p>
+
+        <!-- Current Time -->
+        <div class="card bg-secondary mb-4">
+            <div class="card-body d-flex justify-content-between align-items-center">
+                <div>
+                    <h5 class="mb-1">Current Time</h5>
+                    <span id="currentTime" class="h4">--:--:--</span>
+                </div>
+                <div class="text-end">
+                    <span id="timeSyncStatus" class="badge bg-secondary">Checking...</span>
+                </div>
+            </div>
+        </div>
+
+        <!-- Delayed Start -->
+        <div class="card bg-secondary mb-4">
+            <div class="card-header">
+                <h5 class="mb-0">Delayed Start</h5>
+            </div>
+            <div class="card-body">
+                <form id="delayedStartForm">
+                    <div class="row">
+                        <div class="col-md-4">
+                            <div class="mb-3">
+                                <label class="form-label">Start Type</label>
+                                <select class="form-select" id="delayType">
+                                    <option value="delay">After delay</option>
+                                    <option value="time">At specific time</option>
+                                </select>
+                            </div>
+                        </div>
+                        <div class="col-md-4" id="delayMinutesGroup">
+                            <div class="mb-3">
+                                <label class="form-label">Delay (minutes)</label>
+                                <input type="number" class="form-control" id="delayMinutes" 
+                                       min="1" max="1440" value="60">
+                            </div>
+                        </div>
+                        <div class="col-md-4" id="specificTimeGroup" style="display:none;">
+                            <div class="mb-3">
+                                <label class="form-label">Start Time</label>
+                                <input type="time" class="form-control" id="startTime">
+                            </div>
+                        </div>
+                        <div class="col-md-4 d-flex align-items-end">
+                            <div class="d-grid gap-2 w-100">
+                                <button type="submit" class="btn btn-primary" id="setDelayBtn">Set Delayed Start</button>
+                                <button type="button" class="btn btn-danger" id="cancelDelayBtn" style="display:none;">Cancel</button>
+                            </div>
+                        </div>
+                    </div>
+                </form>
+                <div id="delayedStartStatus" class="mt-3"></div>
+            </div>
+        </div>
+
+        <!-- Scheduled Cycles -->
+        <div class="card bg-secondary mb-4">
+            <div class="card-header d-flex justify-content-between align-items-center">
+                <h5 class="mb-0">Scheduled Cycles</h5>
+                <button class="btn btn-sm btn-primary" data-bs-toggle="modal" data-bs-target="#addScheduleModal">
+                    + Add Schedule
+                </button>
+            </div>
+            <div class="card-body">
+                <div id="schedulesList">
+                    <p class="text-muted">No schedules configured</p>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Add Schedule Modal -->
+    <div class="modal fade" id="addScheduleModal" tabindex="-1">
+        <div class="modal-dialog">
+            <div class="modal-content bg-dark">
+                <div class="modal-header">
+                    <h5 class="modal-title">Add Schedule</h5>
+                    <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+                </div>
+                <div class="modal-body">
+                    <form id="scheduleForm">
+                        <input type="hidden" id="scheduleId" value="">
+                        
+                        <div class="mb-3">
+                            <label class="form-label">Schedule Type</label>
+                            <select class="form-select" id="scheduleType">
+                                <option value="0">One-time</option>
+                                <option value="1">Daily</option>
+                                <option value="2">Weekly</option>
+                            </select>
+                        </div>
+
+                        <div class="row">
+                            <div class="col-6">
+                                <div class="mb-3">
+                                    <label class="form-label">Hour</label>
+                                    <input type="number" class="form-control" id="scheduleHour" 
+                                           min="0" max="23" value="8">
+                                </div>
+                            </div>
+                            <div class="col-6">
+                                <div class="mb-3">
+                                    <label class="form-label">Minute</label>
+                                    <input type="number" class="form-control" id="scheduleMinute" 
+                                           min="0" max="59" value="0">
+                                </div>
+                            </div>
+                        </div>
+
+                        <div class="mb-3" id="daysOfWeekGroup" style="display:none;">
+                            <label class="form-label">Days of Week</label>
+                            <div class="d-flex flex-wrap gap-2">
+                                <div class="form-check">
+                                    <input class="form-check-input" type="checkbox" id="day0" checked>
+                                    <label class="form-check-label" for="day0">Sun</label>
+                                </div>
+                                <div class="form-check">
+                                    <input class="form-check-input" type="checkbox" id="day1" checked>
+                                    <label class="form-check-label" for="day1">Mon</label>
+                                </div>
+                                <div class="form-check">
+                                    <input class="form-check-input" type="checkbox" id="day2" checked>
+                                    <label class="form-check-label" for="day2">Tue</label>
+                                </div>
+                                <div class="form-check">
+                                    <input class="form-check-input" type="checkbox" id="day3" checked>
+                                    <label class="form-check-label" for="day3">Wed</label>
+                                </div>
+                                <div class="form-check">
+                                    <input class="form-check-input" type="checkbox" id="day4" checked>
+                                    <label class="form-check-label" for="day4">Thu</label>
+                                </div>
+                                <div class="form-check">
+                                    <input class="form-check-input" type="checkbox" id="day5" checked>
+                                    <label class="form-check-label" for="day5">Fri</label>
+                                </div>
+                                <div class="form-check">
+                                    <input class="form-check-input" type="checkbox" id="day6" checked>
+                                    <label class="form-check-label" for="day6">Sat</label>
+                                </div>
+                            </div>
+                        </div>
+
+                        <div class="mb-3 form-check form-switch">
+                            <input class="form-check-input" type="checkbox" id="scheduleEnabled" checked>
+                            <label class="form-check-label" for="scheduleEnabled">Enabled</label>
+                        </div>
+                    </form>
+                </div>
+                <div class="modal-footer">
+                    <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancel</button>
+                    <button type="button" class="btn btn-primary" id="saveScheduleBtn">Save Schedule</button>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        document.addEventListener('DOMContentLoaded', function() {
+            // Update current time
+            function updateTime() {
+                fetch('/api/schedule/time')
+                    .then(r => r.json())
+                    .then(data => {
+                        document.getElementById('currentTime').textContent = data.time || '--:--:--';
+                        document.getElementById('timeSyncStatus').textContent = data.synced ? 'Synced' : 'Not Synced';
+                        document.getElementById('timeSyncStatus').className = data.synced ? 'badge bg-success' : 'badge bg-warning';
+                    });
+            }
+            updateTime();
+            setInterval(updateTime, 1000);
+
+            // Delay type toggle
+            document.getElementById('delayType').addEventListener('change', function() {
+                document.getElementById('delayMinutesGroup').style.display = 
+                    this.value === 'delay' ? 'block' : 'none';
+                document.getElementById('specificTimeGroup').style.display = 
+                    this.value === 'time' ? 'block' : 'none';
+            });
+
+            // Schedule type toggle
+            document.getElementById('scheduleType').addEventListener('change', function() {
+                document.getElementById('daysOfWeekGroup').style.display = 
+                    this.value === '2' ? 'block' : 'none';
+            });
+
+            // Load schedules
+            function loadSchedules() {
+                fetch('/api/schedule/list')
+                    .then(r => r.json())
+                    .then(data => {
+                        const list = document.getElementById('schedulesList');
+                        if (!data.schedules || data.schedules.length === 0) {
+                            list.innerHTML = '<p class="text-muted">No schedules configured</p>';
+                            return;
+                        }
+
+                        list.innerHTML = '<div class="table-responsive"><table class="table table-dark table-sm">' +
+                            '<thead><tr><th>Time</th><th>Type</th><th>Days</th><th>Status</th><th>Actions</th></tr></thead><tbody></tbody></table></div>';
+
+                        const tbody = list.querySelector('tbody');
+                        const dayNames = ['Sun', 'Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat'];
+                        const typeNames = ['One-time', 'Daily', 'Weekly'];
+
+                        data.schedules.forEach(s => {
+                            const days = s.daysOfWeek ? dayNames.filter((d, i) => s.daysOfWeek & (1 << i)).join(', ') : '-';
+                            const row = document.createElement('tr');
+                            row.innerHTML = `
+                                <td>${String(s.hour).padStart(2, '0')}:${String(s.minute).padStart(2, '0')}</td>
+                                <td>${typeNames[s.type] || 'Unknown'}</td>
+                                <td>${days}</td>
+                                <td><span class="badge ${s.enabled ? 'bg-success' : 'bg-secondary'}">${s.enabled ? 'Active' : 'Disabled'}</span></td>
+                                <td>
+                                    <button class="btn btn-sm btn-outline-warning me-1" onclick="editSchedule(${s.id})">Edit</button>
+                                    <button class="btn btn-sm btn-outline-danger" onclick="deleteSchedule(${s.id})">Delete</button>
+                                </td>
+                            `;
+                            tbody.appendChild(row);
+                        });
+                    });
+            }
+            loadSchedules();
+
+            // Set delayed start
+            document.getElementById('delayedStartForm').addEventListener('submit', function(e) {
+                e.preventDefault();
+                const delayType = document.getElementById('delayType').value;
+                const data = delayType === 'delay' 
+                    ? { type: 'delay', minutes: parseInt(document.getElementById('delayMinutes').value) }
+                    : { type: 'time', hour: parseInt(document.getElementById('startTime').value.split(':')[0]), 
+                        minute: parseInt(document.getElementById('startTime').value.split(':')[1]) };
+
+                fetch('/api/schedule/delayed', {
+                    method: 'POST',
+                    headers: {'Content-Type': 'application/json'},
+                    body: JSON.stringify(data)
+                })
+                .then(r => r.json())
+                .then(result => {
+                    alert(result.success ? 'Delayed start set!' : 'Error: ' + result.error);
+                    updateDelayedStartStatus();
+                });
+            });
+
+            // Cancel delayed start
+            document.getElementById('cancelDelayBtn').addEventListener('click', function() {
+                fetch('/api/schedule/delayed', {method: 'DELETE'})
+                    .then(r => r.json())
+                    .then(result => {
+                        alert(result.success ? 'Delayed start cancelled' : 'Error: ' + result.error);
+                        updateDelayedStartStatus();
+                    });
+            });
+
+            // Update delayed start status
+            function updateDelayedStartStatus() {
+                fetch('/api/schedule/delayed')
+                    .then(r => r.json())
+                    .then(data => {
+                        const statusDiv = document.getElementById('delayedStartStatus');
+                        const cancelBtn = document.getElementById('cancelDelayBtn');
+                        const setBtn = document.getElementById('setDelayBtn');
+
+                        if (data.active) {
+                            const remaining = Math.ceil(data.remaining / 60000);
+                            statusDiv.innerHTML = `
+                                <div class="alert alert-info">
+                                    <strong>Delayed start active!</strong><br>
+                                    Starting in ${remaining} minutes at ${String(data.hour).padStart(2, '0')}:${String(data.minute).padStart(2, '0')}
+                                </div>
+                            `;
+                            cancelBtn.style.display = 'block';
+                            setBtn.style.display = 'none';
+                        } else {
+                            statusDiv.innerHTML = '';
+                            cancelBtn.style.display = 'none';
+                            setBtn.style.display = 'block';
+                        }
+                    });
+            }
+            updateDelayedStartStatus();
+            setInterval(updateDelayedStartStatus, 60000);
+
+            // Save schedule
+            document.getElementById('saveScheduleBtn').addEventListener('click', function() {
+                const daysOfWeek = 0;
+                for (let i = 0; i < 7; i++) {
+                    if (document.getElementById('day' + i).checked) {
+                        daysOfWeek |= (1 << i);
+                    }
+                }
+
+                const schedule = {
+                    type: parseInt(document.getElementById('scheduleType').value),
+                    hour: parseInt(document.getElementById('scheduleHour').value),
+                    minute: parseInt(document.getElementById('scheduleMinute').value),
+                    daysOfWeek: daysOfWeek,
+                    enabled: document.getElementById('scheduleEnabled').checked
+                };
+
+                const id = document.getElementById('scheduleId').value;
+                const url = id ? '/api/schedule/' + id : '/api/schedule';
+
+                fetch(url, {
+                    method: id ? 'PUT' : 'POST',
+                    headers: {'Content-Type': 'application/json'},
+                    body: JSON.stringify(schedule)
+                })
+                .then(r => r.json())
+                .then(result => {
+                    if (result.success) {
+                        bootstrap.Modal.getInstance(document.getElementById('addScheduleModal')).hide();
+                        loadSchedules();
+                    } else {
+                        alert('Error: ' + result.error);
+                    }
+                });
+            });
+
+            // Edit schedule
+            window.editSchedule = function(id) {
+                fetch('/api/schedule/' + id)
+                    .then(r => r.json())
+                    .then(s => {
+                        document.getElementById('scheduleId').value = s.id;
+                        document.getElementById('scheduleType').value = s.type;
+                        document.getElementById('scheduleHour').value = s.hour;
+                        document.getElementById('scheduleMinute').value = s.minute;
+                        document.getElementById('scheduleEnabled').checked = s.enabled;
+
+                        for (let i = 0; i < 7; i++) {
+                            document.getElementById('day' + i).checked = (s.daysOfWeek & (1 << i)) !== 0;
+                        }
+
+                        document.getElementById('daysOfWeekGroup').style.display = 
+                            s.type === 2 ? 'block' : 'none';
+
+                        new bootstrap.Modal(document.getElementById('addScheduleModal')).show();
+                    });
+            };
+
+            // Delete schedule
+            window.deleteSchedule = function(id) {
+                if (confirm('Delete this schedule?')) {
+                    fetch('/api/schedule/' + id, {method: 'DELETE'})
+                        .then(r => r.json())
+                        .then(result => {
+                            if (result.success) loadSchedules();
+                            else alert('Error: ' + result.error);
+                        });
+                }
+            };
+        });
+    </script>
+</body>
+</html>

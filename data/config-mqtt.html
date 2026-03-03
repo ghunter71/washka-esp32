@@ -1,0 +1,243 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Washka - MQTT Configuration</title>
+    <link href="bootstrap.min.css" rel="stylesheet">
+    <link href="style.css" rel="stylesheet">
+</head>
+<body class="dark-theme">
+    <nav class="navbar navbar-expand-lg navbar-dark bg-dark">
+        <div class="container">
+            <a class="navbar-brand" href="/">🏠 Washka</a>
+            <div class="navbar-nav ms-auto">
+                <a class="nav-link" href="/">Dashboard</a>
+                <a class="nav-link" href="config-gpio.html">GPIO</a>
+                <a class="nav-link" href="config-timing.html">Timing</a>
+                <a class="nav-link" href="config-system.html">System</a>
+                <a class="nav-link active" href="config-mqtt.html">MQTT</a>
+                <a class="nav-link" href="schedule.html">Schedule</a>
+                <a class="nav-link" href="statistics.html">Statistics</a>
+            </div>
+        </div>
+    </nav>
+
+    <div class="container mt-4">
+        <h2>📡 MQTT Configuration</h2>
+        <p class="text-muted">Configure MQTT integration for Home Assistant and other IoT platforms</p>
+
+        <div class="card bg-secondary mb-4">
+            <div class="card-header">
+                <h5 class="mb-0">MQTT Server Settings</h5>
+            </div>
+            <div class="card-body">
+                <form id="mqttForm">
+                    <div class="mb-3 form-check form-switch">
+                        <input class="form-check-input" type="checkbox" id="mqttEnabled">
+                        <label class="form-check-label" for="mqttEnabled">Enable MQTT</label>
+                    </div>
+
+                    <div class="row">
+                        <div class="col-md-8">
+                            <div class="mb-3">
+                                <label for="mqttServer" class="form-label">Server Address</label>
+                                <input type="text" class="form-control" id="mqttServer" 
+                                       placeholder="mqtt.example.com or 192.168.1.100">
+                            </div>
+                        </div>
+                        <div class="col-md-4">
+                            <div class="mb-3">
+                                <label for="mqttPort" class="form-label">Port</label>
+                                <input type="number" class="form-control" id="mqttPort" 
+                                       value="1883" min="1" max="65535">
+                            </div>
+                        </div>
+                    </div>
+
+                    <div class="row">
+                        <div class="col-md-6">
+                            <div class="mb-3">
+                                <label for="mqttUsername" class="form-label">Username (optional)</label>
+                                <input type="text" class="form-control" id="mqttUsername" 
+                                       placeholder="MQTT username">
+                            </div>
+                        </div>
+                        <div class="col-md-6">
+                            <div class="mb-3">
+                                <label for="mqttPassword" class="form-label">Password (optional)</label>
+                                <input type="password" class="form-control" id="mqttPassword" 
+                                       placeholder="MQTT password">
+                            </div>
+                        </div>
+                    </div>
+
+                    <div class="mb-3">
+                        <label for="mqttClientId" class="form-label">Client ID</label>
+                        <input type="text" class="form-control" id="mqttClientId" 
+                               value="washka-esp32" placeholder="Unique client identifier">
+                    </div>
+
+                    <div class="mb-3">
+                        <label for="mqttTopicPrefix" class="form-label">Topic Prefix</label>
+                        <input type="text" class="form-control" id="mqttTopicPrefix" 
+                               value="homeassistant" placeholder="homeassistant">
+                        <div class="form-text">Topics will be: [prefix]/washka/[...]</div>
+                    </div>
+
+                    <div class="mb-3 form-check form-switch">
+                        <input class="form-check-input" type="checkbox" id="mqttDiscovery" checked>
+                        <label class="form-check-label" for="mqttDiscovery">Enable Home Assistant Discovery</label>
+                    </div>
+
+                    <div class="d-flex gap-2">
+                        <button type="submit" class="btn btn-primary">Save Configuration</button>
+                        <button type="button" class="btn btn-success" id="testMqtt">Test Connection</button>
+                    </div>
+                </form>
+            </div>
+        </div>
+
+        <div class="card bg-secondary mb-4">
+            <div class="card-header">
+                <h5 class="mb-0">Connection Status</h5>
+            </div>
+            <div class="card-body">
+                <div id="mqttStatus">
+                    <div class="d-flex align-items-center">
+                        <div class="spinner-border spinner-border-sm me-2" role="status"></div>
+                        <span>Checking connection...</span>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <div class="card bg-secondary">
+            <div class="card-header">
+                <h5 class="mb-0">MQTT Topics Reference</h5>
+            </div>
+            <div class="card-body">
+                <table class="table table-dark table-sm">
+                    <thead>
+                        <tr>
+                            <th>Topic</th>
+                            <th>Description</th>
+                            <th>Payload</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        <tr>
+                            <td><code>[prefix]/washka/state</code></td>
+                            <td>Current state</td>
+                            <td>JSON: state, progress, elapsed, remaining, paused, running</td>
+                        </tr>
+                        <tr>
+                            <td><code>[prefix]/washka/command</code></td>
+                            <td>Commands</td>
+                            <td>START, STOP, PAUSE, RESUME</td>
+                        </tr>
+                        <tr>
+                            <td><code>[prefix]/washka/availability</code></td>
+                            <td>Online/Offline</td>
+                            <td>online, offline</td>
+                        </tr>
+                        <tr>
+                            <td><code>[prefix]/washka/sensors</code></td>
+                            <td>Sensor data</td>
+                            <td>JSON: gerkon_count, gerkon_debounce</td>
+                        </tr>
+                    </tbody>
+                </table>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        document.addEventListener('DOMContentLoaded', function() {
+            // Load current configuration
+            fetch('/api/mqtt/config')
+                .then(r => r.json())
+                .then(data => {
+                    if (data.success) {
+                        document.getElementById('mqttEnabled').checked = data.config.enabled;
+                        document.getElementById('mqttServer').value = data.config.server || '';
+                        document.getElementById('mqttPort').value = data.config.port || 1883;
+                        document.getElementById('mqttUsername').value = data.config.username || '';
+                        document.getElementById('mqttPassword').value = data.config.password || '';
+                        document.getElementById('mqttClientId').value = data.config.clientId || 'washka-esp32';
+                        document.getElementById('mqttTopicPrefix').value = data.config.topicPrefix || 'homeassistant';
+                        document.getElementById('mqttDiscovery').checked = data.config.discoveryEnabled;
+                    }
+                });
+
+            // Update status
+            function updateStatus() {
+                fetch('/api/mqtt/status')
+                    .then(r => r.json())
+                    .then(data => {
+                        const statusDiv = document.getElementById('mqttStatus');
+                        if (data.connected) {
+                            statusDiv.innerHTML = `
+                                <span class="badge bg-success">Connected</span>
+                                <span class="ms-2">Server: ${data.server || 'N/A'}</span>
+                            `;
+                        } else if (data.enabled) {
+                            statusDiv.innerHTML = `
+                                <span class="badge bg-warning">Disconnected</span>
+                                <span class="ms-2">Attempting to reconnect...</span>
+                            `;
+                        } else {
+                            statusDiv.innerHTML = `
+                                <span class="badge bg-secondary">Disabled</span>
+                            `;
+                        }
+                    });
+            }
+            updateStatus();
+            setInterval(updateStatus, 5000);
+
+            // Save form
+            document.getElementById('mqttForm').addEventListener('submit', function(e) {
+                e.preventDefault();
+                const config = {
+                    enabled: document.getElementById('mqttEnabled').checked,
+                    server: document.getElementById('mqttServer').value,
+                    port: parseInt(document.getElementById('mqttPort').value),
+                    username: document.getElementById('mqttUsername').value,
+                    password: document.getElementById('mqttPassword').value,
+                    clientId: document.getElementById('mqttClientId').value,
+                    topicPrefix: document.getElementById('mqttTopicPrefix').value,
+                    discoveryEnabled: document.getElementById('mqttDiscovery').checked
+                };
+
+                fetch('/api/mqtt/config', {
+                    method: 'POST',
+                    headers: {'Content-Type': 'application/json'},
+                    body: JSON.stringify(config)
+                })
+                .then(r => r.json())
+                .then(data => {
+                    alert(data.success ? 'Configuration saved!' : 'Error: ' + data.error);
+                    if (data.success) updateStatus();
+                });
+            });
+
+            // Test connection
+            document.getElementById('testMqtt').addEventListener('click', function() {
+                this.disabled = true;
+                this.innerHTML = '<span class="spinner-border spinner-border-sm"></span> Testing...';
+                
+                fetch('/api/mqtt/test', {method: 'POST'})
+                    .then(r => r.json())
+                    .then(data => {
+                        alert(data.success ? 'Connection successful!' : 'Connection failed: ' + data.error);
+                    })
+                    .finally(() => {
+                        this.disabled = false;
+                        this.innerHTML = 'Test Connection';
+                    });
+            });
+        });
+    </script>
+</body>
+</html>

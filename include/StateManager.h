@@ -2,7 +2,10 @@
  * StateManager.h
  * 
  * Manages wash cycle state machine and transitions.
- * System always starts in IDLE state (no state recovery after power loss).
+ * Thread-safe implementation with FreeRTOS mutex protection.
+ * Async callback queue for non-blocking state notifications.
+ * 
+ * @version 2.0.0 - Added thread-safety and async callbacks
  */
 
 #ifndef STATE_MANAGER_H
@@ -10,6 +13,8 @@
 
 #include <Arduino.h>
 #include <functional>
+#include <freertos/semphr.h>
+#include <freertos/queue.h>
 
 // Wash cycle states
 enum class WashState : uint8_t {
@@ -31,6 +36,13 @@ enum class WashState : uint8_t {
     ERROR = 255            // Error state
 };
 
+// State change event for async queue
+struct StateChangeEvent {
+    WashState oldState;
+    WashState newState;
+    unsigned long timestamp;
+};
+
 class StateManager {
 public:
     // State change callback type
@@ -42,12 +54,12 @@ public:
     // Initialization
     bool begin();
     
-    // State control
+    // Thread-safe state control
     WashState getCurrentState();
-    void setState(WashState newState);
+    bool setState(WashState newState);  // Returns true if transition was valid
     bool isValidTransition(WashState from, WashState to);
     
-    // Cycle control
+    // Cycle control (thread-safe)
     bool startCycle();
     bool stopCycle();
     bool pauseCycle();
@@ -60,7 +72,7 @@ public:
     unsigned long getElapsedTime();
     unsigned long getEstimatedRemaining();
     
-    // State queries
+    // State queries (thread-safe)
     bool isIdle();
     bool isRunning();
     bool isPaused();
@@ -71,9 +83,18 @@ public:
     // Callbacks
     void onStateChange(StateChangeCallback callback);
     
+    // Process async callbacks - call this from main loop
+    void processCallbacks();
+    
     // Timing
     void setCycleStartTime(unsigned long startTime);
     unsigned long getCycleStartTime();
+    
+    // State persistence for recovery
+    bool saveStateToNVS();
+    bool loadStateFromNVS();
+    bool hasStoredState();
+    void clearStoredState();
     
 private:
     WashState currentState;
@@ -83,10 +104,22 @@ private:
     unsigned long stateStartTime;
     StateChangeCallback stateChangeCallback;
     
+    // Thread safety
+    SemaphoreHandle_t stateMutex;
+    
+    // Async callback queue
+    QueueHandle_t eventQueue;
+    static const int EVENT_QUEUE_SIZE = 10;
+    
     // Helper methods
+    void queueStateChangeEvent(WashState oldState, WashState newState);
     void notifyStateChange(WashState oldState, WashState newState);
     uint8_t calculateProgress();
     unsigned long estimateRemainingTime();
+    
+    // Mutex helpers
+    bool takeMutex(unsigned long timeoutMs = 100);
+    void giveMutex();
 };
 
 #endif // STATE_MANAGER_H

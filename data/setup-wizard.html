@@ -1,0 +1,465 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Washka - Setup Wizard</title>
+    <link href="bootstrap.min.css" rel="stylesheet">
+    <link href="style.css" rel="stylesheet">
+    <style>
+        .wizard-step { display: none; }
+        .wizard-step.active { display: block; }
+        .step-indicator {
+            display: flex;
+            justify-content: center;
+            margin-bottom: 2rem;
+        }
+        .step-indicator .step {
+            width: 40px;
+            height: 40px;
+            border-radius: 50%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            background: #333;
+            color: #666;
+            margin: 0 10px;
+            font-weight: bold;
+        }
+        .step-indicator .step.active {
+            background: #0d6efd;
+            color: white;
+        }
+        .step-indicator .step.completed {
+            background: #198754;
+            color: white;
+        }
+        .step-indicator .step-line {
+            flex: 1;
+            max-width: 100px;
+            height: 2px;
+            background: #333;
+            align-self: center;
+        }
+        .step-indicator .step-line.completed {
+            background: #198754;
+        }
+    </style>
+</head>
+<body class="dark-theme">
+    <div class="container mt-5">
+        <div class="row justify-content-center">
+            <div class="col-md-8">
+                <div class="card bg-secondary">
+                    <div class="card-header text-center">
+                        <h3 class="mb-0">🏠 Washka Setup Wizard</h3>
+                    </div>
+                    <div class="card-body">
+                        <!-- Step Indicators -->
+                        <div class="step-indicator">
+                            <div class="step active" id="step1-ind">1</div>
+                            <div class="step-line"></div>
+                            <div class="step" id="step2-ind">2</div>
+                            <div class="step-line"></div>
+                            <div class="step" id="step3-ind">3</div>
+                            <div class="step-line"></div>
+                            <div class="step" id="step4-ind">4</div>
+                            <div class="step-line"></div>
+                            <div class="step" id="step5-ind">5</div>
+                        </div>
+
+                        <!-- Step 1: Welcome -->
+                        <div class="wizard-step active" id="step1">
+                            <h4 class="text-center mb-4">Welcome to Washka!</h4>
+                            <div class="text-center mb-4">
+                                <div style="font-size: 4rem;">🍽️</div>
+                            </div>
+                            <p class="text-center">
+                                This wizard will guide you through the initial setup of your dishwasher controller.
+                            </p>
+                            <ul class="list-group list-group-flush mb-4">
+                                <li class="list-group-item bg-transparent">✓ Configure WiFi connection</li>
+                                <li class="list-group-item bg-transparent">✓ Set up authentication</li>
+                                <li class="list-group-item bg-transparent">✓ Configure notifications</li>
+                                <li class="list-group-item bg-transparent">✓ Test hardware connections</li>
+                            </ul>
+                            <div class="d-grid">
+                                <button class="btn btn-primary btn-lg" onclick="nextStep()">Start Setup →</button>
+                            </div>
+                        </div>
+
+                        <!-- Step 2: WiFi -->
+                        <div class="wizard-step" id="step2">
+                            <h4 class="mb-4">📡 WiFi Configuration</h4>
+                            <div class="mb-3">
+                                <label class="form-label">Network Name (SSID)</label>
+                                <input type="text" class="form-control" id="wifiSSID" placeholder="Your WiFi network name">
+                            </div>
+                            <div class="mb-3">
+                                <label class="form-label">Password</label>
+                                <input type="password" class="form-control" id="wifiPassword" placeholder="Your WiFi password">
+                            </div>
+                            <div class="mb-3">
+                                <button class="btn btn-outline-info btn-sm" onclick="scanWiFi()">🔍 Scan Networks</button>
+                                <div id="networkList" class="mt-2"></div>
+                            </div>
+                            <div class="d-flex justify-content-between">
+                                <button class="btn btn-secondary" onclick="prevStep()">← Back</button>
+                                <button class="btn btn-primary" onclick="saveWiFi()">Continue →</button>
+                            </div>
+                        </div>
+
+                        <!-- Step 3: Security -->
+                        <div class="wizard-step" id="step3">
+                            <h4 class="mb-4">🔒 Security Settings</h4>
+                            <div class="alert alert-info">
+                                Your API token is required to access the device remotely. Save it securely!
+                            </div>
+                            <div class="mb-3">
+                                <label class="form-label">Admin API Token</label>
+                                <div class="input-group">
+                                    <input type="text" class="form-control" id="apiToken" readonly>
+                                    <button class="btn btn-outline-secondary" onclick="generateToken()">Generate</button>
+                                    <button class="btn btn-outline-secondary" onclick="copyToken()">📋</button>
+                                </div>
+                            </div>
+                            <div class="mb-3 form-check form-switch">
+                                <input class="form-check-input" type="checkbox" id="authEnabled" checked>
+                                <label class="form-check-label" for="authEnabled">Enable Authentication</label>
+                            </div>
+                            <div class="d-flex justify-content-between">
+                                <button class="btn btn-secondary" onclick="prevStep()">← Back</button>
+                                <button class="btn btn-primary" onclick="saveSecurity()">Continue →</button>
+                            </div>
+                        </div>
+
+                        <!-- Step 4: Notifications -->
+                        <div class="wizard-step" id="step4">
+                            <h4 class="mb-4">🔔 Notifications (Optional)</h4>
+                            <p class="text-muted mb-4">Configure how you want to receive notifications about wash cycles.</p>
+
+                            <div class="accordion" id="notifAccordion">
+                                <!-- Telegram -->
+                                <div class="accordion-item bg-dark">
+                                    <h2 class="accordion-header">
+                                        <button class="accordion-button collapsed bg-dark text-white" type="button" 
+                                                data-bs-toggle="collapse" data-bs-target="#telegramSection">
+                                            📱 Telegram Bot
+                                        </button>
+                                    </h2>
+                                    <div id="telegramSection" class="accordion-collapse collapse" data-bs-parent="#notifAccordion">
+                                        <div class="accordion-body">
+                                            <div class="mb-3">
+                                                <label class="form-label">Bot Token</label>
+                                                <input type="text" class="form-control" id="telegramToken" 
+                                                       placeholder="123456:ABC-DEF...">
+                                                <div class="form-text">Get from @BotFather on Telegram</div>
+                                            </div>
+                                            <div class="mb-3">
+                                                <label class="form-label">Your Chat ID</label>
+                                                <input type="text" class="form-control" id="telegramChatId" 
+                                                       placeholder="-100123456789">
+                                                <div class="form-text">Send /start to your bot, then check logs for your Chat ID</div>
+                                            </div>
+                                            <div class="form-check">
+                                                <input class="form-check-input" type="checkbox" id="telegramEnabled">
+                                                <label class="form-check-label" for="telegramEnabled">Enable Telegram</label>
+                                            </div>
+                                        </div>
+                                    </div>
+                                </div>
+
+                                <!-- MQTT -->
+                                <div class="accordion-item bg-dark">
+                                    <h2 class="accordion-header">
+                                        <button class="accordion-button collapsed bg-dark text-white" type="button" 
+                                                data-bs-toggle="collapse" data-bs-target="#mqttSection">
+                                            🏠 Home Assistant / MQTT
+                                        </button>
+                                    </h2>
+                                    <div id="mqttSection" class="accordion-collapse collapse" data-bs-parent="#notifAccordion">
+                                        <div class="accordion-body">
+                                            <div class="row">
+                                                <div class="col-8">
+                                                    <div class="mb-3">
+                                                        <label class="form-label">MQTT Server</label>
+                                                        <input type="text" class="form-control" id="mqttServer" 
+                                                               placeholder="192.168.1.100">
+                                                    </div>
+                                                </div>
+                                                <div class="col-4">
+                                                    <div class="mb-3">
+                                                        <label class="form-label">Port</label>
+                                                        <input type="number" class="form-control" id="mqttPort" value="1883">
+                                                    </div>
+                                                </div>
+                                            </div>
+                                            <div class="row">
+                                                <div class="col-6">
+                                                    <div class="mb-3">
+                                                        <label class="form-label">Username</label>
+                                                        <input type="text" class="form-control" id="mqttUser">
+                                                    </div>
+                                                </div>
+                                                <div class="col-6">
+                                                    <div class="mb-3">
+                                                        <label class="form-label">Password</label>
+                                                        <input type="password" class="form-control" id="mqttPass">
+                                                    </div>
+                                                </div>
+                                            </div>
+                                            <div class="form-check">
+                                                <input class="form-check-input" type="checkbox" id="mqttEnabled">
+                                                <label class="form-check-label" for="mqttEnabled">Enable MQTT</label>
+                                            </div>
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+
+                            <div class="d-flex justify-content-between mt-4">
+                                <button class="btn btn-secondary" onclick="prevStep()">← Back</button>
+                                <button class="btn btn-primary" onclick="saveNotifications()">Continue →</button>
+                            </div>
+                        </div>
+
+                        <!-- Step 5: Complete -->
+                        <div class="wizard-step" id="step5">
+                            <h4 class="text-center mb-4">✅ Setup Complete!</h4>
+                            <div class="text-center mb-4">
+                                <div style="font-size: 4rem;">🎉</div>
+                            </div>
+                            <div class="alert alert-success">
+                                Your Washka dishwasher controller is ready to use!
+                            </div>
+                            <h5>Configuration Summary:</h5>
+                            <ul class="list-group list-group-flush mb-4">
+                                <li class="list-group-item bg-transparent">
+                                    <strong>WiFi:</strong> <span id="summarySSID">-</span>
+                                </li>
+                                <li class="list-group-item bg-transparent">
+                                    <strong>IP Address:</strong> <span id="summaryIP">-</span>
+                                </li>
+                                <li class="list-group-item bg-transparent">
+                                    <strong>Authentication:</strong> <span id="summaryAuth">-</span>
+                                </li>
+                                <li class="list-group-item bg-transparent">
+                                    <strong>Notifications:</strong> <span id="summaryNotif">-</span>
+                                </li>
+                            </ul>
+                            <div class="d-grid gap-2">
+                                <button class="btn btn-success btn-lg" onclick="goToDashboard()">
+                                    Go to Dashboard →
+                                </button>
+                                <button class="btn btn-outline-info" onclick="testHardware()">
+                                    🔧 Test Hardware Connections
+                                </button>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        let currentStep = 1;
+        const totalSteps = 5;
+
+        function updateIndicators() {
+            for (let i = 1; i <= totalSteps; i++) {
+                const indicator = document.getElementById('step' + i + '-ind');
+                indicator.classList.remove('active', 'completed');
+                if (i < currentStep) {
+                    indicator.classList.add('completed');
+                } else if (i === currentStep) {
+                    indicator.classList.add('active');
+                }
+            }
+
+            // Update step lines
+            const lines = document.querySelectorAll('.step-line');
+            lines.forEach((line, index) => {
+                if (index < currentStep - 1) {
+                    line.classList.add('completed');
+                } else {
+                    line.classList.remove('completed');
+                }
+            });
+        }
+
+        function showStep(step) {
+            document.querySelectorAll('.wizard-step').forEach(s => s.classList.remove('active'));
+            document.getElementById('step' + step).classList.add('active');
+            currentStep = step;
+            updateIndicators();
+        }
+
+        function nextStep() {
+            if (currentStep < totalSteps) {
+                showStep(currentStep + 1);
+            }
+        }
+
+        function prevStep() {
+            if (currentStep > 1) {
+                showStep(currentStep - 1);
+            }
+        }
+
+        function scanWiFi() {
+            const list = document.getElementById('networkList');
+            list.innerHTML = '<div class="spinner-border spinner-border-sm"></div> Scanning...';
+            
+            fetch('/api/wifi/scan')
+                .then(r => r.json())
+                .then(data => {
+                    if (data.networks && data.networks.length > 0) {
+                        list.innerHTML = data.networks.map(n => `
+                            <button class="btn btn-outline-secondary btn-sm me-1 mb-1" 
+                                    onclick="selectNetwork('${n.ssid}')">
+                                ${n.ssid} (${n.rssi} dBm)
+                            </button>
+                        `).join('');
+                    } else {
+                        list.innerHTML = '<span class="text-muted">No networks found</span>';
+                    }
+                });
+        }
+
+        function selectNetwork(ssid) {
+            document.getElementById('wifiSSID').value = ssid;
+            document.getElementById('wifiPassword').focus();
+        }
+
+        function saveWiFi() {
+            const ssid = document.getElementById('wifiSSID').value;
+            const pass = document.getElementById('wifiPassword').value;
+
+            if (!ssid) {
+                alert('Please enter a network name');
+                return;
+            }
+
+            fetch('/api/wifi', {
+                method: 'POST',
+                headers: {'Content-Type': 'application/json'},
+                body: JSON.stringify({ssid: ssid, password: pass})
+            })
+            .then(r => r.json())
+            .then(data => {
+                if (data.success) {
+                    document.getElementById('summarySSID').textContent = ssid;
+                    nextStep();
+                } else {
+                    alert('Error: ' + data.error);
+                }
+            });
+        }
+
+        function generateToken() {
+            const chars = 'ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789';
+            let token = '';
+            for (let i = 0; i < 32; i++) {
+                token += chars.charAt(Math.floor(Math.random() * chars.length));
+            }
+            document.getElementById('apiToken').value = token;
+        }
+
+        function copyToken() {
+            const token = document.getElementById('apiToken').value;
+            navigator.clipboard.writeText(token).then(() => {
+                alert('Token copied to clipboard!');
+            });
+        }
+
+        function saveSecurity() {
+            const token = document.getElementById('apiToken').value;
+            const enabled = document.getElementById('authEnabled').checked;
+
+            if (!token) {
+                alert('Please generate an API token');
+                return;
+            }
+
+            fetch('/api/auth/config', {
+                method: 'POST',
+                headers: {'Content-Type': 'application/json'},
+                body: JSON.stringify({adminToken: token, enabled: enabled})
+            })
+            .then(r => r.json())
+            .then(data => {
+                if (data.success) {
+                    document.getElementById('summaryAuth').textContent = enabled ? 'Enabled' : 'Disabled';
+                    nextStep();
+                } else {
+                    alert('Error: ' + data.error);
+                }
+            });
+        }
+
+        function saveNotifications() {
+            const telegramEnabled = document.getElementById('telegramEnabled').checked;
+            const mqttEnabled = document.getElementById('mqttEnabled').checked;
+
+            // Save Telegram config
+            if (telegramEnabled) {
+                fetch('/api/telegram/config', {
+                    method: 'POST',
+                    headers: {'Content-Type': 'application/json'},
+                    body: JSON.stringify({
+                        enabled: true,
+                        token: document.getElementById('telegramToken').value,
+                        chatIds: [document.getElementById('telegramChatId').value]
+                    })
+                });
+            }
+
+            // Save MQTT config
+            if (mqttEnabled) {
+                fetch('/api/mqtt/config', {
+                    method: 'POST',
+                    headers: {'Content-Type': 'application/json'},
+                    body: JSON.stringify({
+                        enabled: true,
+                        server: document.getElementById('mqttServer').value,
+                        port: parseInt(document.getElementById('mqttPort').value),
+                        username: document.getElementById('mqttUser').value,
+                        password: document.getElementById('mqttPass').value
+                    })
+                });
+            }
+
+            // Build summary
+            const notifs = [];
+            if (telegramEnabled) notifs.push('Telegram');
+            if (mqttEnabled) notifs.push('MQTT');
+            document.getElementById('summaryNotif').textContent = 
+                notifs.length > 0 ? notifs.join(', ') : 'None';
+
+            // Get IP address
+            fetch('/api/status')
+                .then(r => r.json())
+                .then(data => {
+                    document.getElementById('summaryIP').textContent = data.ip || 'Connected';
+                });
+
+            nextStep();
+        }
+
+        function goToDashboard() {
+            window.location.href = '/';
+        }
+
+        function testHardware() {
+            window.location.href = '/config-gpio.html';
+        }
+
+        // Initialize
+        document.addEventListener('DOMContentLoaded', function() {
+            generateToken();
+            updateIndicators();
+        });
+    </script>
+</body>
+</html>
